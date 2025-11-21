@@ -1,5 +1,7 @@
 package com.github.budwing.clean.concurrency;
 
+import java.util.concurrent.TimeUnit;
+
 import com.github.budwing.User;
 
 /**
@@ -23,15 +25,18 @@ public class LiveLock {
      */
     class Solution1 {
         public void transfer(User from, User to, Double amount) throws InterruptedException {
+            long base = 10; //ms
+            long max = 10000; //ms
+            long backoff = base;
             while (true) {
-                if (from.getLock().tryLock()) {
-                    try {
-                        System.out.println(Thread.currentThread().getName() + 
+                if (from.getLock().tryLock(100, TimeUnit.MILLISECONDS)) {
+                    System.out.println(Thread.currentThread().getName() + 
                             " locked " + from.getUsername());
-                        if (to.getLock().tryLock()) {
-                            try {
-                                System.out.println(Thread.currentThread().getName() + 
+                    try {
+                        if (to.getLock().tryLock(100, TimeUnit.MILLISECONDS)) {
+                            System.out.println(Thread.currentThread().getName() + 
                                     " locked " + to.getUsername());
+                            try {
                                 if (from.getBalance() >= amount) {
                                     from.setBalance(from.getBalance() - amount);
                                     to.setBalance(to.getBalance() + amount);
@@ -43,14 +48,24 @@ public class LiveLock {
                             } finally {
                                 to.getLock().unlock();
                             }
+                        } else {
+                            long jitter = (long)(Math.random() * backoff);
+                            System.out.println(Thread.currentThread().getName() + 
+                                " failed to lock " + to.getUsername() +
+                                ", backoff " + backoff + "ms, jitter " + jitter + "ms");
+                            Thread.sleep(jitter);
+                            backoff = Math.min(max, backoff * 2);
                         }
                     } finally {
                         from.getLock().unlock();
                     }
                 } else {
+                    long jitter = (long)(Math.random() * backoff);
                     System.out.println(Thread.currentThread().getName() + 
-                        " failed to lock " + from.getUsername());
-                    Thread.sleep((long)(Math.random() * 100));
+                        " failed to lock " + to.getUsername() +
+                        ", backoff " + backoff + "ms, jitter " + jitter + "ms");
+                    Thread.sleep(jitter);
+                    backoff = Math.min(max, backoff * 2);
                 }
             }
         }
@@ -101,5 +116,34 @@ public class LiveLock {
             }
             System.out.println("Transfer failed after maximum retries");
         }
+    }
+
+    public static void main(String[] args) {
+        User alice = new User("Alice", 1000.0);
+        User bob = new User("Bob", 1000.0);
+        LiveLock liveLock = new LiveLock();
+
+        // Thread 1: Transfer from Alice to Bob
+        Thread t1 = new Thread(() -> {
+            try {
+                // liveLock.new Solution1().transfer(alice, bob, 100.0);
+                liveLock.new Solution2().transfer(alice, bob, 100.0);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }, "T1");
+
+        // Thread 2: Transfer from Bob to Alice
+        Thread t2 = new Thread(() -> {
+            try {
+                // liveLock.new Solution1().transfer(bob, alice, 200.0);
+                liveLock.new Solution2().transfer(alice, bob, 100.0);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }, "T2");
+
+        t1.start();
+        t2.start();
     }
 }

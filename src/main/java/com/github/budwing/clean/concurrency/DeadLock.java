@@ -21,7 +21,7 @@ public class DeadLock {
      * 1. reduces the risk of deadlocks by allowing threads to back off if they cannot acquire the lock within a certain time frame
      * 2. can improve system responsiveness by preventing threads from being blocked indefinitely
      * Cons:
-     * 1. may lead to increased complexity in the code, as developers need to handle the case where a lock cannot be acquired
+     * 1. may still fail to finish the operation if locks cannot be acquired within the timeout period
      * 2. may result in reduced throughput if threads frequently fail to acquire locks and have to retry operations
      */
     class Solution1 {
@@ -83,6 +83,9 @@ public class DeadLock {
         }
     }
 
+    // Implementation would involve using an ExecutorService with a single thread
+    // to handle all transfer requests sequentially.
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
     /**
      * Deadlock solution 3: Single Thread Executor for all transfers
      * This is actually a concurrency pattern named Active Object.
@@ -94,9 +97,6 @@ public class DeadLock {
      * 2. reduces concurrency, which may not be suitable for applications requiring high throughput and low latency
      */
     class Solution3 {
-        // Implementation would involve using an ExecutorService with a single thread
-        // to handle all transfer requests sequentially.
-        private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
         public void transfer(User from, User to, Double amount) {
             executor.submit(() -> {
@@ -117,5 +117,36 @@ public class DeadLock {
                 }
             });
         }
+    }
+
+    public static void main(String[] args) {
+        User alice = new User("Alice", 1000.0);
+        User bob = new User("Bob", 1000.0);
+        DeadLock deadLock = new DeadLock();
+
+        // Thread 1: Transfer from Alice to Bob
+        Thread t1 = new Thread(() -> {
+            try {
+                deadLock.new Solution1().transfer(alice, bob, 100.0);
+                // deadLock.new Solution2().transfer(alice, bob, 100.0);
+                // deadLock.new Solution3().transfer(alice, bob, 100.0);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }, "Thread-1");
+
+        // Thread 2: Transfer from Bob to Alice
+        Thread t2 = new Thread(() -> {
+            try {
+                deadLock.new Solution1().transfer(alice, bob, 100.0);
+                // deadLock.new Solution2().transfer(alice, bob, 100.0);
+                // deadLock.new Solution3().transfer(bob, alice, 200.0);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }, "Thread-2");
+
+        t1.start();
+        t2.start();
     }
 }

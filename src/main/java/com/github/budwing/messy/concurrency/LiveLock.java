@@ -47,4 +47,23 @@ public class LiveLock {
             }
         }
     }
+
+    public static void main(String[] args) {
+        User alice = new User("Alice", 1000.0);
+        User bob = new User("Bob", 1000.0);
+        LiveLock liveLock = new LiveLock();
+
+        // Thread 1: Transfer from Alice to Bob
+        Thread t1 = new Thread(() -> {
+            liveLock.transfer(alice, bob, 100.0);
+        }, "T1");
+
+        // Thread 2: Transfer from Bob to Alice
+        Thread t2 = new Thread(() -> {
+            liveLock.transfer(bob, alice, 200.0);
+        }, "T2");
+
+        t1.start();
+        t2.start();
+    }
 }

@@ -15,6 +15,21 @@ public class User {
 
     private Lock lock = new ReentrantLock();
 
+    public User() {
+        this.createdAt = new Date();
+        this.active = true;
+        this.loginAttempts = 0;
+        this.balance = 0.0;
+    }
+
+    public User(String username, Double balance) {
+        this.username = username;
+        this.balance = balance;
+        this.createdAt = new Date();
+        this.active = true;
+        this.loginAttempts = 0;
+    }
+
     public String getUsername() {
         return username;
     }

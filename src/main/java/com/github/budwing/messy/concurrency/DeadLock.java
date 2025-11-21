@@ -49,4 +49,23 @@ public class DeadLock {
                 " save " + amount + " successfully, balance: " + user.getBalance());
         }
     }
+
+    public static void main(String[] args) {
+        User alice = new User("Alice", 1000.0);
+        User bob = new User("Bob", 1000.0);
+        DeadLock deadLock = new DeadLock();
+
+        // Thread 1: Transfer from Alice to Bob
+        Thread t1 = new Thread(() -> {
+            deadLock.transfer(alice, bob, 100.0);
+        }, "Thread-1");
+
+        // Thread 2: Transfer from Bob to Alice
+        Thread t2 = new Thread(() -> {
+            deadLock.transfer(bob, alice, 200.0);
+        }, "Thread-2");
+
+        t1.start();
+        t2.start();
+    }
 }
