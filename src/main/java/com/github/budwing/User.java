@@ -14,6 +14,7 @@ public class User {
     private int loginAttempts;
 
     private Lock lock = new ReentrantLock();
+    private Lock fairLock = new ReentrantLock(true);
 
     public User() {
         this.createdAt = new Date();
@@ -75,5 +76,9 @@ public class User {
     
     public Lock getLock() {
         return lock;
+    }
+
+    public Lock getFairLock() {
+        return fairLock;
     }
 }

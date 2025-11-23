@@ -1,37 +1,24 @@
-package com.github.budwing.messy.exception;
+package com.github.budwing.clean.exception;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.github.budwing.User;
 
-/**
- * Exceptions are unexpected events or system level failures. 
- * Business logical failures should not be defined as exceptions.
- * 1. Readability impact, exceptions may cause goto style flows.
- * 2. Performance impact, exceptions need to collect thread stack information.
- * 3. Design impact, obscure business logical branches and exceptions.
- * 4. Testability impact, unit test needs to handle exceptions.
- * 
- */
-public class ExceptionDemoService {
+public class ExceptionService {
     private GeneralDatasource datasource = new GeneralDatasource();
 
-    public User findUserById(Long id) throws UserNotFoundException {
+    public Optional<User> findUserById(Long id) {
         User user = datasource.selectUser(id);
-        if (user == null) {
-            throw new UserNotFoundException("User not found: " + id);
-        }
 
-        return user;
+        return Optional.ofNullable(user);
     }
 
-    public String getConfig(String key) {
+    public Optional<String> getConfig(String key) {
         String value = datasource.getConfig(key);
-        if (value == null) {
-            throw new ConfigMissingException("Configuration missing for key: " + key);
-        }
-        return value;
+        
+        return Optional.ofNullable(value);
     }
 
     public void pay(String accountId, double amount) throws InsufficientBalanceException {
@@ -41,28 +28,6 @@ public class ExceptionDemoService {
         }
         // Proceed with payment logic...
     }
-}
-
-/**
- * User not found exception.
- * Is it really an exception?
- */
-class UserNotFoundException extends Exception {
-    public UserNotFoundException(String message) {
-        super(message);
-    }
-
-}
-
-/**
- * Configuration missing exception.
- * Is it really an exception?
- */
-class ConfigMissingException extends RuntimeException {
-    public ConfigMissingException(String message) {
-        super(message);
-    }
-
 }
 
 /**
