@@ -16,7 +16,7 @@ public class SideEffect {
             // Simulated authentication logic (read-only)
             User user = DB.getUserByUsernameAndPassword(username, password);
             if (user != null) {
-                int newLoginAttempts = user.getLoginAttempts() + 1;
+                int newLoginAttempts = user.getLoginTimes() + 1;
                 // Do NOT update DB or initialize session here. Return intent instead.
                 return new AuthenticateResult(true, user, newLoginAttempts, true);
             }
@@ -25,7 +25,8 @@ public class SideEffect {
         }
 
         /**
-         * Result object for authentication describing the effects that should be applied by caller.
+         * Result object for authentication describing the effects that should be
+         * applied by caller.
          */
         public static class AuthenticateResult {
             private final boolean success;
@@ -33,7 +34,8 @@ public class SideEffect {
             private final int updatedLoginAttempts;
             private final boolean shouldInitializeSession;
 
-            public AuthenticateResult(boolean success, User user, int updatedLoginAttempts, boolean shouldInitializeSession) {
+            public AuthenticateResult(boolean success, User user, int updatedLoginAttempts,
+                    boolean shouldInitializeSession) {
                 this.success = success;
                 this.user = user;
                 this.updatedLoginAttempts = updatedLoginAttempts;
@@ -68,7 +70,7 @@ class Client {
         SideEffect.UserService.AuthenticateResult result = userService.authenticateUser(username, password);
         if (result.isSuccess()) {
             User user = result.getUser();
-            user.setLoginAttempts(result.getUpdatedLoginAttempts());
+            user.setLoginTimes(result.getUpdatedLoginAttempts());
             DB.updateUser(user);
             if (result.shouldInitializeSession()) {
                 Session.initialize(user.getUsername());
